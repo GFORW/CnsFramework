@@ -1,8 +1,10 @@
 #include "CnsFramework.h"
 #include <conio.h>
 
-CnsFramework::CnsFramework(int X, int Y, int tick_msc) : ScreenX(X), ScreenY(Y), tick(tick_msc)
+
+CnsFramework::CnsFramework(int X, int Y, std::chrono::nanoseconds tick_ms) : ScreenX(X), ScreenY(Y), tick(tick_ms)
 {
+	
 	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	hConsoleIn = GetStdHandle(STD_INPUT_HANDLE);
 	// disable text selection
@@ -40,7 +42,7 @@ CnsFramework::CnsFramework(int X, int Y, int tick_msc) : ScreenX(X), ScreenY(Y),
 	}
 
 
-	WindowSize = { 0, 0, 1, 1 };    // BECAUSE WINDOWS IS STUPID
+	WindowSize = { 0, 0, 1, 1 };    // allows setting any size
 	SetConsoleWindowInfo(hConsole, TRUE, &WindowSize);
 
 	windowBufSize = { (short)(ScreenX),(short)(ScreenY) };
@@ -61,14 +63,6 @@ CnsFramework::CnsFramework(int X, int Y, int tick_msc) : ScreenX(X), ScreenY(Y),
 	HWND cWin = GetConsoleWindow();
 	SetWindowLong(cWin, GWL_STYLE, GetWindowLong(cWin, GWL_STYLE) & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX);
 
-	// fill up array
-	{
-		Screen.resize(ScreenX, std::vector<wchar_t>(ScreenY, L' '));
-
-		for (int i = 0; i < ScreenX; i++)
-			for (int j = 0; j < ScreenY; j++)
-				Screen.at(i).at(j) = L' ';
-	}
 }
 
 CnsFramework::~CnsFramework()
@@ -76,8 +70,12 @@ CnsFramework::~CnsFramework()
 
 }
 
-// Draw Screen
-void CnsFramework::Render()
+void CnsFramework::ChangeTickSpeed(std::chrono::nanoseconds ms)
+{
+	tick = ms;
+}
+
+void CnsFramework::Render(GameState const & state)
 {
 	DWORD Chars;
 	COORD pos;
@@ -85,45 +83,55 @@ void CnsFramework::Render()
 		for (short j = 0; j < ScreenY; j++)
 		{
 			pos = { i,j };
-			FillConsoleOutputCharacter(hConsole, Screen.at(i).at(j), 1, pos, &Chars);
+			FillConsoleOutputCharacter(hConsole, state.RenderScreen.at(i).at(j), 1, pos, &Chars);
 		}
 }
 
-void CnsFramework::SetChar(unsigned int x, unsigned int y, wchar_t c)
-{
-	Screen.at(x).at(y) = c;
+void CnsFramework::Update(GameState * state){
+
 }
 
-wchar_t CnsFramework::GetChar(unsigned int x, unsigned int y)
-{
-	return Screen.at(x).at(y);
-}
+bool CnsFramework::Handle_Events(){
+
+	return true; // false to quit
+};
 
 void CnsFramework::Run()
 {
-	std::chrono::high_resolution_clock timer;
-	while (play)
+	using clock = std::chrono::high_resolution_clock;
+
+	std::chrono::nanoseconds lag(0ns);
+	bool play = true;
+
+	while (play) 
 	{
-		auto start = timer.now();
-		if (_kbhit())
+		auto start = clock::now();
+
+		if (_kbhit()) // key pressed
 		{
 			KeyPressed(_getch());
 			if (!FlushConsoleInputBuffer(hConsoleIn))
 				std::cout << "FlushConsoleInputBuffer failed with error " << GetLastError();
 		}
-		Update();
-		Render();
 
-		auto end = timer.now();
+		play = Handle_Events();
+
+		while (lag >= tick)
+		{
+			lag -= tick;
+		}
+		Update(&*current_state);
+		Render(*current_state);
+
+		auto end = clock::now();
+
+		auto delta_lag = clock::now() - start;
+		lag += std::chrono::duration_cast<std::chrono::nanoseconds>(delta_lag);
+
 		auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 		if (delta > 0)
-			FPS = (1.00f / delta)* 1000.0f;
-		std::this_thread::sleep_for(std::chrono::milliseconds(tick));
-	}
-	std::cin.ignore();
-}
+			FPS = (1.00f / delta)* 1000.0f;		auto end_time = std::chrono::high_resolution_clock::now();
 
-void CnsFramework::ChangeTickSpeed(int msec)
-{
-	tick = msec;
+		std::this_thread::sleep_for(tick);
+	}
 }

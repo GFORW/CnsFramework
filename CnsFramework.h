@@ -1,4 +1,5 @@
 #pragma once
+#include "GameState.h"
 #include <Windows.h>
 #include <thread>
 #include <chrono>
@@ -6,36 +7,35 @@
 #include <string>
 #include <iostream>
 
+using namespace std::chrono_literals;
+
+constexpr std::chrono::nanoseconds timestep(16ms); // 1 / (60 fps) = 16 milliseconds
+
 
 class CnsFramework
 {
 public:
-	CnsFramework(int X = 50, int Y = 25, int tick_msc = 50);
+	CnsFramework(int X = 50, int Y = 25, std::chrono::nanoseconds tick_ms = timestep);
 
 	virtual ~CnsFramework();
-
-
 	virtual void KeyPressed(int Code) {};
-	virtual void Update() {};
 
+	virtual void Update(GameState * state);
+	virtual bool Handle_Events();
 
-	void SetChar(unsigned int x, unsigned int y, wchar_t c) ;
 	void Run();
-	wchar_t GetChar(unsigned int x, unsigned int y);
-	void ChangeTickSpeed(int msec);
+	void ChangeTickSpeed(std::chrono::nanoseconds ms);
 
+	std::chrono::nanoseconds tick;
 
+	int FPS;
 	int ScreenX;
 	int ScreenY;
 
-	int tick;
-	int play = true;
-	int FPS;
+	GameState * current_state;
 
 private:
-	void Render();
-
-	std::vector<std::vector<wchar_t>> Screen;
+	void Render(GameState const & state);
 
 	HANDLE hConsole;
 	HANDLE hConsoleIn;
