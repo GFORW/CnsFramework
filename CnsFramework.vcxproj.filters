@@ -15,18 +15,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CnsFramework.h">
+    <ClInclude Include="src\GameState.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="GameState.h">
+    <ClInclude Include="src\CnsFramework.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CnsFramework.cpp">
+    <ClCompile Include="src\GameState.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="GameState.cpp">
+    <ClCompile Include="src\CnsFramework.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

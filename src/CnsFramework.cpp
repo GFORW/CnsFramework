@@ -2,7 +2,7 @@
 #include <conio.h>
 
 
-CnsFramework::CnsFramework(int X, int Y, std::chrono::nanoseconds tick_ms) : ScreenX(X), ScreenY(Y), tick(tick_ms)
+CnsFramework::CnsFramework(const int X = 50, const int Y = 25, const std::chrono::nanoseconds tick_ms = timestep) : ScreenX(X), ScreenY(Y), tick(tick_ms)
 {
 	
 	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -70,12 +70,12 @@ CnsFramework::~CnsFramework()
 
 }
 
-void CnsFramework::ChangeTickSpeed(std::chrono::nanoseconds ms)
+void CnsFramework::ChangeTickSpeed(const std::chrono::nanoseconds ms)
 {
 	tick = ms;
 }
 
-void CnsFramework::Render(GameState const & state)
+void CnsFramework::Render(const GameState * const state )
 {
 	DWORD Chars;
 	COORD pos;
@@ -83,11 +83,11 @@ void CnsFramework::Render(GameState const & state)
 		for (short j = 0; j < ScreenY; j++)
 		{
 			pos = { i,j };
-			FillConsoleOutputCharacter(hConsole, state.RenderScreen.at(i).at(j), 1, pos, &Chars);
+			FillConsoleOutputCharacter(hConsole, static_cast<char>(state->GetChar(i,j)), 1, pos, &Chars);
 		}
 }
 
-void CnsFramework::Update(GameState * state){
+void CnsFramework::Update(){
 
 }
 
@@ -120,8 +120,8 @@ void CnsFramework::Run()
 		{
 			lag -= tick;
 		}
-		Update(&*current_state);
-		Render(*current_state);
+		Update();
+		Render(current_state);
 
 		auto end = clock::now();
 
@@ -130,7 +130,9 @@ void CnsFramework::Run()
 
 		auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 		if (delta > 0)
-			FPS = (1.00f / delta)* 1000.0f;		auto end_time = std::chrono::high_resolution_clock::now();
+			FPS = (1.00f / delta)* 1000.0f;		
+		
+		auto end_time = std::chrono::high_resolution_clock::now();
 
 		std::this_thread::sleep_for(tick);
 	}
