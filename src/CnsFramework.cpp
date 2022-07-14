@@ -2,7 +2,7 @@
 #include <conio.h>
 
 
-CnsFramework::CnsFramework(const int X = 50, const int Y = 25, const std::chrono::nanoseconds tick_ms = timestep) : ScreenX(X), ScreenY(Y), tick(tick_ms)
+CnsFramework::CnsFramework(const int& X = 50, const int& Y = 25, const std::chrono::nanoseconds& tick_ms = timestep) : ScreenX(X), ScreenY(Y), tick(tick_ms)
 {
 	
 	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -67,15 +67,14 @@ CnsFramework::CnsFramework(const int X = 50, const int Y = 25, const std::chrono
 
 CnsFramework::~CnsFramework()
 {
-
 }
 
-void CnsFramework::ChangeTickSpeed(const std::chrono::nanoseconds ms)
+void CnsFramework::ChangeTickSpeed(const std::chrono::nanoseconds& ms) 
 {
 	tick = ms;
 }
 
-void CnsFramework::Render(const GameState * const state )
+void CnsFramework::Render(const GameState* const state )
 {
 	DWORD Chars;
 	COORD pos;
@@ -83,7 +82,7 @@ void CnsFramework::Render(const GameState * const state )
 		for (short j = 0; j < ScreenY; j++)
 		{
 			pos = { i,j };
-			FillConsoleOutputCharacter(hConsole, static_cast<char>(state->GetChar(i,j)), 1, pos, &Chars);
+			FillConsoleOutputCharacterW(hConsole, state->GetChar(i,j), 1, pos, &Chars);
 		}
 }
 
@@ -100,13 +99,11 @@ void CnsFramework::Run()
 {
 	using clock = std::chrono::high_resolution_clock;
 
-	std::chrono::nanoseconds lag(0ns);
 	bool play = true;
 
-	while (play) 
+	while (play)
 	{
 		auto start = clock::now();
-
 		if (_kbhit()) // key pressed
 		{
 			KeyPressed(_getch());
@@ -116,24 +113,15 @@ void CnsFramework::Run()
 
 		play = Handle_Events();
 
-		while (lag >= tick)
-		{
-			lag -= tick;
-		}
 		Update();
 		Render(current_state);
-
 		auto end = clock::now();
+		auto delta_ns = end - start;
 
-		auto delta_lag = clock::now() - start;
-		lag += std::chrono::duration_cast<std::chrono::nanoseconds>(delta_lag);
-
-		auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+		auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(delta_ns).count();
 		if (delta > 0)
-			FPS = (1.00f / delta)* 1000.0f;		
-		
-		auto end_time = std::chrono::high_resolution_clock::now();
+			FPS = (1.00f / delta) * 1000.0f;
 
-		std::this_thread::sleep_for(tick);
+		std::this_thread::sleep_for(tick - delta_ns);
 	}
 }

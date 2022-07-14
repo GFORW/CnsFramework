@@ -17,16 +17,16 @@ constexpr std::chrono::nanoseconds timestep(16ms); // 1 / (60 fps) = 16 millisec
 class CnsFramework
 {
 public:
-	CnsFramework(const int X ,const int Y , const std::chrono::nanoseconds tick_ms);
-
+	CnsFramework(const int& X ,const int& Y , const std::chrono::nanoseconds& tick_ms);
+	CnsFramework(const CnsFramework& copy) = delete;
 	virtual ~CnsFramework();
-	virtual void KeyPressed(const int Code) const {};
+	virtual void KeyPressed(const int& Code){};
 
 	virtual void Update();
 	virtual bool Handle_Events();
 
 	void Run();
-	void ChangeTickSpeed(const std::chrono::nanoseconds ms);
+	void ChangeTickSpeed(const std::chrono::nanoseconds& ms);
 
 	std::chrono::nanoseconds tick;
 
@@ -34,7 +34,7 @@ public:
 	int ScreenX;
 	int ScreenY;
 
-	GameState * current_state;
+	GameState* current_state;
 
 private:
 	void Render(const GameState* const state);
